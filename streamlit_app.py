@@ -1,5 +1,6 @@
 import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from huggingface_hub import login
 from peft import PeftModel
 import torch
 
