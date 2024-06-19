@@ -43,11 +43,19 @@ model, tokenizer, device = init_app(hf_token)
 
 # Function to generate response
 def generate_response(input_text):
-    input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
-    with torch.no_grad():
-        output = model.generate(input_ids)
-    predicted_text = tokenizer.decode(output[0], skip_special_tokens=True)
-    return predicted_text
+    st.info("Generating response...")
+    
+    try:
+        input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
+        with torch.no_grad():
+            output = model.generate(input_ids)
+        predicted_text = tokenizer.decode(output[0], skip_special_tokens=True)
+        st.info(f"Response generated successfully {predicted_text}")
+        return predicted_text
+    except Exception as e:
+        st.error(f"Error generating response: {e}")
+        return "Error: Failed to generate response"
+
 
 # Text input from user
 user_input = st.text_area("Enter your text here:")
