@@ -4,6 +4,10 @@ from huggingface_hub import login
 from peft import PeftModel
 import torch
 import asyncio
+import nest_asyncio
+
+# Initialize asyncio
+nest_asyncio.apply()
 
 # Function to initialize the app
 @st.cache(allow_output_mutation=True)
@@ -69,17 +73,24 @@ async def generate_responses(prompts):
 # BatchProcessor class to handle batch processing
 class BatchProcessor:
     def __init__(self, batch_size, interval):
-        st.info("Initializing BatchProcessor...")
         self.batch_size = batch_size
         self.interval = interval
-        self.queue = asyncio.Queue()
+        self.queue = None
         self.results = {}
 
+    async def start(self):
+        self.queue = asyncio.Queue()
+        await self.process_batch()
+
     async def add_task(self, prompt, task_id):
+        if self.queue is None:
+            raise RuntimeError("BatchProcessor not started. Call start() first.")
         st.info(f"Adding task {task_id} to queue...")
         await self.queue.put((prompt, task_id))
 
     async def process_batch(self):
+        if self.queue is None:
+            raise RuntimeError("BatchProcessor not started. Call start() first.")
         st.info("Starting batch processing...")
         while True:
             if self.queue.qsize() >= self.batch_size:
@@ -105,7 +116,7 @@ class BatchProcessor:
 
 # Instantiate and start the batch processor
 batch_processor = BatchProcessor(batch_size=4, interval=1)
-asyncio.create_task(batch_processor.process_batch())
+asyncio.create_task(batch_processor.start())
 
 # Function to generate response
 def generate_response(input_text):
